@@ -1,10 +1,12 @@
 package axel.legue.multithreadingsample
 
-import android.os.*
+import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
 import axel.legue.multithreadingsample.databinding.ActivityMainBinding
+import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -28,17 +30,25 @@ class MainActivity : AppCompatActivity() {
      * Run some code
      */
     private fun runCode() {
-        //  Runnable Execute the operation on a background thread and at the end of the stack adn execute it immediately when all the operation are done or with a delay if requested
-        //  Handler handle the communication between the background Thread and the UI Thread
+        // Object declaration
+        Thread{
+            for (i in 1..10) {
+                Log.i(LOG_TAG, "Looping $i")
+                Thread.sleep(1000)
+            }
+            Log.i(LOG_TAG, "All done!")
+        }.start()
 
-        Handler().postAtTime({ log("Posting at a certain time") }, SystemClock.uptimeMillis() + 4000)
-        Handler().postDelayed({ log("operation from runnable 1s") }, 1000)
-        Handler().postDelayed({ log("operation from runnable 2s") }, 2000)
-        Handler().postDelayed({ log("operation from runnable 3s") }, 3000)
+        // Extension function in Kotlin
+        thread(start = true) {
+            for (i in 1..10) {
+                Log.i(LOG_TAG, "Looping $i")
+                Thread.sleep(1000)
+            }
+            Log.i(LOG_TAG, "All done!")
+        }
 
-        log("synchronous operation A")
-        log("synchronous operation B")
-        log("synchronous operation C")
+
 
     }
 
