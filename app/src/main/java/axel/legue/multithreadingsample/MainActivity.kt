@@ -1,7 +1,6 @@
 package axel.legue.multithreadingsample
 
-import android.os.Bundle
-import android.os.Handler
+import android.os.*
 import android.util.Log
 import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
@@ -29,7 +28,18 @@ class MainActivity : AppCompatActivity() {
      * Run some code
      */
     private fun runCode() {
-        log("Running code")
+        //  Runnable Execute the operation on a background thread and at the end of the stack adn execute it immediately when all the operation are done or with a delay if requested
+        //  Handler handle the communication between the background Thread and the UI Thread
+
+        Handler().postAtTime({ log("Posting at a certain time") }, SystemClock.uptimeMillis() + 4000)
+        Handler().postDelayed({ log("operation from runnable 1s") }, 1000)
+        Handler().postDelayed({ log("operation from runnable 2s") }, 2000)
+        Handler().postDelayed({ log("operation from runnable 3s") }, 3000)
+
+        log("synchronous operation A")
+        log("synchronous operation B")
+        log("synchronous operation C")
+
     }
 
     /**
@@ -55,5 +65,10 @@ class MainActivity : AppCompatActivity() {
      */
     private fun scrollTextToEnd() {
         Handler().post { binding.scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
+    }
+
+    class Toto {
+        val name = "toto"
+
     }
 }
