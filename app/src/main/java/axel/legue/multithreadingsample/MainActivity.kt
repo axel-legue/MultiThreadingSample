@@ -10,10 +10,14 @@ import androidx.appcompat.app.AppCompatActivity
 import axel.legue.multithreadingsample.databinding.ActivityMainBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URL
+import java.nio.charset.Charset
 
 const val MESSAGE_KEY = "message_key"
+
+const val fileUrl = "https://2833069.youcanlearnit.net/lorem_ipsum.txt"
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -52,8 +56,8 @@ class MainActivity : AppCompatActivity() {
      */
     private fun runCode() {
         CoroutineScope(Dispatchers.Main).launch {
-            val result = fetch_something()
-            log(result)
+            val result = fetchSomething()
+            log(result ?: "Null")
         }
 
     }
@@ -84,9 +88,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Suspend mean that the function can be paused
-    private suspend fun fetch_something(): String {
-        delay(2000)
-        return "Something"
+    private suspend fun fetchSomething(): String? {
+        //Switch to a background Thread  ==> "withContext"
+        return withContext(Dispatchers.IO) {
+            val url = URL(fileUrl)
+            return@withContext url.readText(Charset.defaultCharset())
+        }
     }
 
 }
