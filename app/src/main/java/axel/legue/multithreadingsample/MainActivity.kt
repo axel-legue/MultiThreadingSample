@@ -7,13 +7,9 @@ import android.os.Message
 import android.util.Log
 import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import axel.legue.multithreadingsample.databinding.ActivityMainBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.net.URL
-import java.nio.charset.Charset
 
 const val MESSAGE_KEY = "message_key"
 
@@ -21,6 +17,7 @@ const val fileUrl = "https://2833069.youcanlearnit.net/lorem_ipsum.txt"
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var viewModel: MainViewModel
 
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
@@ -49,17 +46,18 @@ class MainActivity : AppCompatActivity() {
             runButton.setOnClickListener { runCode() }
             clearButton.setOnClickListener { clearOutput() }
         }
+
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+        viewModel.myData.observe(this, Observer {
+            log(it)
+        })
     }
 
     /**
      * Run some code
      */
     private fun runCode() {
-        CoroutineScope(Dispatchers.Main).launch {
-            val result = fetchSomething()
-            log(result ?: "Null")
-        }
-
+        viewModel.doWork()
     }
 
     /**
@@ -87,13 +85,5 @@ class MainActivity : AppCompatActivity() {
         Handler().post { binding.scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 
-    // Suspend mean that the function can be paused
-    private suspend fun fetchSomething(): String? {
-        //Switch to a background Thread  ==> "withContext"
-        return withContext(Dispatchers.IO) {
-            val url = URL(fileUrl)
-            return@withContext url.readText(Charset.defaultCharset())
-        }
-    }
 
 }
