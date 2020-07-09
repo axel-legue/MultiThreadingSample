@@ -4,22 +4,27 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
-import android.util.Log
-import android.widget.ScrollView
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
-import axel.legue.multithreadingsample.databinding.ActivityMainBinding
+import axel.legue.multithreadingsample.databinding.DiceLayoutBinding
 import kotlin.concurrent.thread
+import kotlin.random.Random
 
 const val MESSAGE_KEY = "message_key"
+const val DICE_INDEX_KEY = "die_index_key"
+const val DICE_VALUE_KEY = "die_value_key"
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: DiceLayoutBinding
+    private lateinit var drawables: Array<Int>
+    private lateinit var imageViews: Array<ImageView>
 
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             val bundle = msg.data
-            val message = bundle?.getString(MESSAGE_KEY) + " handler"
-            log(message ?: "message was null")
+            val diceIndex = bundle.getInt(DICE_INDEX_KEY, 0)
+            val diceValue = bundle.getInt(DICE_VALUE_KEY, 1)
+            imageViews[diceIndex].setImageResource(drawables[diceValue - 1])
         }
     }
 
@@ -27,66 +32,48 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // Initialize view binding for view object references
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = DiceLayoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        imageViews = arrayOf(
+            binding.die1,
+            binding.die2,
+            binding.die3,
+            binding.die4,
+            binding.die5
+        )
+
+        drawables = arrayOf(
+            R.drawable.dice_1,
+            R.drawable.dice_2,
+            R.drawable.dice_3,
+            R.drawable.dice_4,
+            R.drawable.dice_5,
+            R.drawable.dice_6
+        )
         // Initialize button click handlers
         with(binding) {
-            runButton.setOnClickListener { runCode() }
-            clearButton.setOnClickListener { clearOutput() }
+            rollButton.setOnClickListener { rollDices() }
         }
     }
 
-    /**
-     * Run some code
-     */
-    private fun runCode() {
-        // Extension function in Kotlin
-        thread(start = true) {
-            val bundle = Bundle()
-            for (i in 1..10) {
-                bundle.putString(MESSAGE_KEY,"Looping $i" )
-                Message().also {
-                    it.data = bundle
-                    handler.sendMessage(it)
+    private fun rollDices() {
+
+        for (diceIndex in imageViews.indices) {
+            thread(start = true) {
+                for (i in 1..20) {
+                    val mess = Message()
+                    mess.data.putInt(DICE_INDEX_KEY, diceIndex)
+                    mess.data.putInt(DICE_VALUE_KEY, getDiceValue())
+                    handler.sendMessage(mess)
+                    Thread.sleep(100)
                 }
-                Thread.sleep(1000)
-            }
-            bundle.putString(MESSAGE_KEY,"All done!" )
-            Message().also {
-                it.data = bundle
-                handler.sendMessage(it)
             }
         }
     }
 
-    /**
-     * Clear log display
-     */
-    private fun clearOutput() {
-        binding.logDisplay.text = ""
-        scrollTextToEnd()
+    private fun getDiceValue(): Int {
+        return Random.nextInt(1, 7)
     }
 
-    /**
-     * Log output to logcat and the screen
-     */
-    @Suppress("SameParameterValue")
-    private fun log(message: String) {
-        Log.i(LOG_TAG, message)
-        binding.logDisplay.append(message + "\n")
-        scrollTextToEnd()
-    }
-
-    /**
-     * Scroll to end. Wrapped in post() function so it's the last thing to happen
-     */
-    private fun scrollTextToEnd() {
-        Handler().post { binding.scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
-    }
-
-    class Toto {
-        val name = "toto"
-
-    }
 }
