@@ -4,76 +4,89 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
-import android.widget.ImageView
+import android.util.Log
+import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
-import axel.legue.multithreadingsample.databinding.DiceLayoutBinding
-import kotlin.concurrent.thread
-import kotlin.random.Random
+import axel.legue.multithreadingsample.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 const val MESSAGE_KEY = "message_key"
-const val DICE_INDEX_KEY = "die_index_key"
-const val DICE_VALUE_KEY = "die_value_key"
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: DiceLayoutBinding
-    private lateinit var drawables: Array<Int>
-    private lateinit var imageViews: Array<ImageView>
+    private lateinit var binding: ActivityMainBinding
 
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             val bundle = msg.data
-            val diceIndex = bundle.getInt(DICE_INDEX_KEY, 0)
-            val diceValue = bundle.getInt(DICE_VALUE_KEY, 1)
-            imageViews[diceIndex].setImageResource(drawables[diceValue - 1])
+            val message = bundle?.getString(MESSAGE_KEY) + " handler"
+            log(message ?: "message was null")
         }
     }
+
+    /**
+     * Coroutines Context  - 3 available
+     *      1 - Dispatchers.Main(UI Thread) : For very short tasks that don't need to run in the background
+     *      2 - Dispatchers.IO(Background Thread) : For storage and network access
+     *      3 - Dispatchers.Default(Background Thread) : For CPU-intensive work
+     */
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Initialize view binding for view object references
-        binding = DiceLayoutBinding.inflate(layoutInflater)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        imageViews = arrayOf(
-            binding.die1,
-            binding.die2,
-            binding.die3,
-            binding.die4,
-            binding.die5
-        )
-
-        drawables = arrayOf(
-            R.drawable.dice_1,
-            R.drawable.dice_2,
-            R.drawable.dice_3,
-            R.drawable.dice_4,
-            R.drawable.dice_5,
-            R.drawable.dice_6
-        )
         // Initialize button click handlers
         with(binding) {
-            rollButton.setOnClickListener { rollDices() }
+            runButton.setOnClickListener { runCode() }
+            clearButton.setOnClickListener { clearOutput() }
         }
     }
 
-    private fun rollDices() {
-
-        for (diceIndex in imageViews.indices) {
-            thread(start = true) {
-                for (i in 1..20) {
-                    val mess = Message()
-                    mess.data.putInt(DICE_INDEX_KEY, diceIndex)
-                    mess.data.putInt(DICE_VALUE_KEY, getDiceValue())
-                    handler.sendMessage(mess)
-                    Thread.sleep(100)
-                }
-            }
+    /**
+     * Run some code
+     */
+    private fun runCode() {
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = fetch_something()
+            log(result)
         }
+
     }
 
-    private fun getDiceValue(): Int {
-        return Random.nextInt(1, 7)
+    /**
+     * Clear log display
+     */
+    private fun clearOutput() {
+        binding.logDisplay.text = ""
+        scrollTextToEnd()
+    }
+
+    /**
+     * Log output to logcat and the screen
+     */
+    @Suppress("SameParameterValue")
+    private fun log(message: String) {
+        Log.i(LOG_TAG, message)
+        binding.logDisplay.append(message + "\n")
+        scrollTextToEnd()
+    }
+
+    /**
+     * Scroll to end. Wrapped in post() function so it's the last thing to happen
+     */
+    private fun scrollTextToEnd() {
+        Handler().post { binding.scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
+    }
+
+    // Suspend mean that the function can be paused
+    private suspend fun fetch_something(): String {
+        delay(2000)
+        return "Something"
     }
 
 }
